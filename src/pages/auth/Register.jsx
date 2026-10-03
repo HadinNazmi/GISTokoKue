@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { UserPlus, Mail, Lock, User, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { supabase } from '../../lib/SupabaseClient';
+import { supabase, registerUser } from '../../lib/SupabaseClient';
 import CustomAlert from '../../components/dashboard/CustomAlert';
 
 export default function Register() {
@@ -44,47 +44,30 @@ export default function Register() {
     }
 
     try {
-      // Cek apakah email sudah terdaftar
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('email')
-        .eq('email', formData.email.trim())
-        .single();
+      const result = await registerUser({
+        nama_lengkap: formData.nama_lengkap,
+        email: formData.email,
+        password: formData.password,
+        role: 'owner'
+      });
 
-      if (existingUser) {
-        setAlert({ type: 'error', message: 'Email sudah terdaftar! Silakan gunakan email lain atau login.' });
+      if (!result.success) {
+        setAlert({ type: 'error', message: result.error || 'Terjadi kesalahan saat registrasi.' });
         setIsLoading(false);
         return;
       }
 
-      // Insert user baru dengan role 'owner'
-      const { data, error } = await supabase
-        .from('users')
-        .insert([{
-          nama_lengkap: formData.nama_lengkap,
-          email: formData.email.trim(),
-          password: formData.password, // ⚠️ CATATAN: Sebaiknya hash password di production
-          role: 'owner' // Otomatis set sebagai owner
-        }])
-        .select();
-
-      if (error) {
-        throw error;
-      }
-
-      if (data && data.length > 0) {
-        setAlert({ type: 'success', message: 'Registrasi berhasil! Mengalihkan ke halaman login...' });
-        
-        // Redirect ke login setelah 2 detik
-        setTimeout(() => {
-          navigate('/login', { 
-            state: { 
-              message: 'Registrasi berhasil! Silakan login dengan akun baru Anda.',
-              email: formData.email 
-            } 
-          });
-        }, 2000);
-      }
+      setAlert({ type: 'success', message: 'Registrasi berhasil! Mengalihkan ke halaman login...' });
+      
+      // Redirect ke login setelah 2 detik
+      setTimeout(() => {
+        navigate('/login', { 
+          state: { 
+            message: 'Registrasi berhasil! Silakan login dengan akun baru Anda.',
+            email: formData.email 
+          } 
+        });
+      }, 2000);
     } catch (error) {
       console.error('Registration error:', error);
       setAlert({ 

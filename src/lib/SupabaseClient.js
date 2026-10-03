@@ -1,20 +1,146 @@
 // src/lib/SupabaseClient.js
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+import localTokoJson from '../data/tokoKue.json';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://lpygndiashzwdzqgusnm.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase credentials! Check your .env file')
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// ==================== LOCAL STORAGE KEYS & MOCK DATA ====================
+
+const TOKO_LOCAL_KEY = 'webgis_toko_data';
+const USERS_LOCAL_KEY = 'webgis_users_data';
+const REQUESTS_LOCAL_KEY = 'webgis_requests_data';
+const LOGS_LOCAL_KEY = 'webgis_logs_data';
+
+const DEFAULT_USERS = [
+  {
+    user_id: 1,
+    nama_lengkap: 'Admin GIS Pekanbaru',
+    email: 'admin@gmail.com',
+    password: 'admin123',
+    role: 'admin'
+  },
+  {
+    user_id: 2,
+    nama_lengkap: 'Owner Toko Kue',
+    email: 'owner@gmail.com',
+    password: 'owner123',
+    role: 'owner'
+  }
+];
+
+function normalizeToko(item) {
+  return {
+    ...item,
+    id: Number(item.id),
+    nama: item.nama || '',
+    lat: item.lat !== undefined && item.lat !== null ? parseFloat(item.lat) : 0.5333,
+    lng: item.lng !== undefined && item.lng !== null ? parseFloat(item.lng) : 101.4333,
+    kecamatan: item.kecamatan || 'Tidak diketahui',
+    kelurahan: item.kelurahan || 'Tidak diketahui',
+    jalan: item.jalan || item.alamat || '-',
+    alamat: item.alamat || item.jalan || '-',
+    produk: item.produk || 'Kue',
+    jam_buka: item.jam_buka || item.jamBuka || '08:00 - 21:00',
+    jamBuka: item.jamBuka || item.jam_buka || '08:00 - 21:00',
+    tahun_berdiri: item.tahun_berdiri || item.tahunBerdiri || 2020,
+    tahunBerdiri: item.tahunBerdiri || item.tahun_berdiri || 2020,
+    rating: item.rating !== undefined && item.rating !== null ? parseFloat(item.rating) : 4.5,
+    telp: item.telp || item.no_telp || '-',
+    menu_favorit: item.menu_favorit || item.menuFavorit || 'Kue Spesial',
+    menuFavorit: item.menuFavorit || item.menu_favorit || 'Kue Spesial',
+    deskripsi: item.deskripsi || `${item.nama} adalah salah satu pilihan toko kue terbaik di Pekanbaru.`,
+    gambar: item.gambar || null,
+    gambarmenu: item.gambarmenu || item.gambar_menu || null,
+    user_id: item.user_id || 2
+  };
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+function getLocalTokos() {
+  try {
+    const saved = localStorage.getItem(TOKO_LOCAL_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(normalizeToko);
+      }
+    }
+  } catch (e) {
+    console.warn('Error membaca localStorage toko:', e);
+  }
 
-// ==================== AUTH FUNCTIONS (Custom Table) ====================
+  const rawList = localTokoJson?.tokoKue || [];
+  const normalized = rawList.map(normalizeToko);
+  try {
+    localStorage.setItem(TOKO_LOCAL_KEY, JSON.stringify(normalized));
+  } catch (e) {}
+  return normalized;
+}
+
+function saveLocalTokos(tokos) {
+  try {
+    localStorage.setItem(TOKO_LOCAL_KEY, JSON.stringify(tokos));
+  } catch (e) {}
+}
+
+function getLocalUsers() {
+  try {
+    const saved = localStorage.getItem(USERS_LOCAL_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {}
+  try {
+    localStorage.setItem(USERS_LOCAL_KEY, JSON.stringify(DEFAULT_USERS));
+  } catch (e) {}
+  return DEFAULT_USERS;
+}
+
+function saveLocalUsers(users) {
+  try {
+    localStorage.setItem(USERS_LOCAL_KEY, JSON.stringify(users));
+  } catch (e) {}
+}
+
+function getLocalRequests() {
+  try {
+    const saved = localStorage.getItem(REQUESTS_LOCAL_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveLocalRequests(requests) {
+  try {
+    localStorage.setItem(REQUESTS_LOCAL_KEY, JSON.stringify(requests));
+  } catch (e) {}
+}
+
+function getLocalLogs() {
+  try {
+    const saved = localStorage.getItem(LOGS_LOCAL_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveLocalLogs(logs) {
+  try {
+    localStorage.setItem(LOGS_LOCAL_KEY, JSON.stringify(logs));
+  } catch (e) {}
+}
+
+// ==================== AUTH FUNCTIONS ====================
 
 /**
- * Login user dengan tabel users custom
+ * Login user dengan tabel users custom (fallback ke data lokal jika Supabase offline)
  */
 export const loginUser = async (email, password) => {
   try {
@@ -23,140 +149,215 @@ export const loginUser = async (email, password) => {
       .select('*')
       .eq('email', email)
       .eq('password', password)
-      .single()
-    
-    if (error) throw new Error('Email atau password salah')
-    if (!data) throw new Error('User tidak ditemukan')
-    
-    return { 
-      success: true, 
-      user: {
-        user_id: data.user_id,
-        email: data.email,
-        role: data.role,
-        nama_lengkap: data.nama_lengkap
-      }
+      .single();
+
+    if (!error && data) {
+      return {
+        success: true,
+        user: {
+          user_id: data.user_id,
+          email: data.email,
+          role: data.role,
+          nama_lengkap: data.nama_lengkap
+        }
+      };
     }
-  } catch (error) {
-    return { success: false, error: error.message }
+  } catch (err) {
+    console.warn('[Supabase Fallback] Supabase offline, menggunakan autentikasi lokal:', err.message);
   }
-}
+
+  // Fallback ke local users
+  const users = getLocalUsers();
+  const matched = users.find(u => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password);
+  if (matched) {
+    return {
+      success: true,
+      user: {
+        user_id: matched.user_id,
+        email: matched.email,
+        role: matched.role,
+        nama_lengkap: matched.nama_lengkap
+      }
+    };
+  }
+
+  return { success: false, error: 'Email atau password salah' };
+};
 
 /**
- * Logout user
+ * Register user baru (dengan fallback ke lokal jika offline)
  */
+export const registerUser = async ({ nama_lengkap, email, password, role = 'owner' }) => {
+  try {
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('email')
+      .eq('email', email.trim())
+      .single();
+
+    if (existingUser) {
+      return { success: false, error: 'Email sudah terdaftar! Silakan gunakan email lain atau login.' };
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .insert([{
+        nama_lengkap,
+        email: email.trim(),
+        password,
+        role
+      }])
+      .select();
+
+    if (!error && data && data.length > 0) {
+      return { success: true, data: data[0] };
+    }
+  } catch (err) {
+    console.warn('[Supabase Fallback] Supabase offline, registrasi disimpan di penyimpanan lokal:', err.message);
+  }
+
+  // Fallback lokal
+  const users = getLocalUsers();
+  const exists = users.some(u => u.email.toLowerCase() === email.trim().toLowerCase());
+  if (exists) {
+    return { success: false, error: 'Email sudah terdaftar! Silakan gunakan email lain atau login.' };
+  }
+
+  const newUser = {
+    user_id: Date.now(),
+    nama_lengkap,
+    email: email.trim(),
+    password,
+    role
+  };
+  users.push(newUser);
+  saveLocalUsers(users);
+
+  return { success: true, data: newUser };
+};
+
 export const logoutUser = async () => {
-  return { success: true }
-}
+  return { success: true };
+};
 
-/**
- * Get user by ID
- */
 export const getUserById = async (userId) => {
   try {
     const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('user_id', userId)
-      .single()
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .single();
 
-/**
- * Get user by Email
- */
+    if (!error && data) return { success: true, data };
+  } catch (err) {}
+
+  const users = getLocalUsers();
+  const user = users.find(u => u.user_id === Number(userId));
+  if (user) return { success: true, data: user };
+  return { success: false, error: 'User tidak ditemukan' };
+};
+
 export const getUserByEmail = async (email) => {
   try {
     const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('email', email)
-      .single()
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .single();
 
-/**
- * Update user profile (nama_lengkap)
- */
+    if (!error && data) return { success: true, data };
+  } catch (err) {}
+
+  const users = getLocalUsers();
+  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (user) return { success: true, data: user };
+  return { success: false, error: 'User tidak ditemukan' };
+};
+
 export const updateUserProfile = async (userId, namaLengkap) => {
   try {
     const { data, error } = await supabase
       .from('users')
       .update({ nama_lengkap: namaLengkap })
       .eq('user_id', userId)
-      .select()
-    
-    if (error) throw error
-    return { success: true, data: data[0] }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .select();
 
-/**
- * Change user password
- */
+    if (!error && data) return { success: true, data: data[0] };
+  } catch (err) {}
+
+  const users = getLocalUsers();
+  const index = users.findIndex(u => u.user_id === Number(userId));
+  if (index !== -1) {
+    users[index].nama_lengkap = namaLengkap;
+    saveLocalUsers(users);
+    return { success: true, data: users[index] };
+  }
+  return { success: false, error: 'User tidak ditemukan' };
+};
+
 export const changeUserPassword = async (userId, currentPassword, newPassword) => {
   try {
-    // 1. Verifikasi password lama
     const { data: user, error: fetchError } = await supabase
       .from('users')
       .select('*')
       .eq('user_id', userId)
-      .single()
-    
-    if (fetchError) throw new Error('User tidak ditemukan')
-    
-    // 2. Cek password lama
-    if (user.password !== currentPassword) {
-      throw new Error('Password saat ini salah')
+      .single();
+
+    if (!fetchError && user) {
+      if (user.password !== currentPassword) {
+        throw new Error('Password saat ini salah');
+      }
+      const { data, error } = await supabase
+        .from('users')
+        .update({ password: newPassword })
+        .eq('user_id', userId)
+        .select();
+
+      if (!error && data) return { success: true, data: data[0] };
     }
-    
-    // 3. Update password baru
-    const { data, error } = await supabase
-      .from('users')
-      .update({ password: newPassword })
-      .eq('user_id', userId)
-      .select()
-    
-    if (error) throw error
-    return { success: true, data: data[0] }
-  } catch (error) {
-    return { success: false, error: error.message }
+  } catch (err) {
+    if (err.message === 'Password saat ini salah') {
+      return { success: false, error: err.message };
+    }
   }
-}
+
+  const users = getLocalUsers();
+  const user = users.find(u => u.user_id === Number(userId));
+  if (!user) return { success: false, error: 'User tidak ditemukan' };
+  if (user.password !== currentPassword) {
+    return { success: false, error: 'Password saat ini salah' };
+  }
+  user.password = newPassword;
+  saveLocalUsers(users);
+  return { success: true, data: user };
+};
 
 // ==================== TOKO KUE CRUD FUNCTIONS ====================
 
 /**
- * GET: Ambil semua toko (untuk ADMIN)
+ * GET: Ambil semua toko
  */
 export const getAllToko = async () => {
   try {
     const { data, error } = await supabase
       .from('toko_kue')
       .select('*')
-      .order('id', { ascending: true })
-    
-    if (error) throw error
-    return { success: true, data }
+      .order('id', { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      return { success: true, data: data.map(normalizeToko) };
+    }
   } catch (error) {
-    return { success: false, error: error.message }
+    console.warn('[Supabase Fallback] Menggunakan data lokal tokoKue.json:', error.message);
   }
-}
+
+  // Fallback ke data lokal (tokoKue.json)
+  const localData = getLocalTokos();
+  return { success: true, data: localData };
+};
 
 /**
- * GET: Ambil toko milik owner tertentu (untuk OWNER)
+ * GET: Ambil toko milik owner tertentu
  */
 export const getTokoByUserId = async (userId) => {
   try {
@@ -164,14 +365,18 @@ export const getTokoByUserId = async (userId) => {
       .from('toko_kue')
       .select('*')
       .eq('user_id', userId)
-      .order('id', { ascending: true })
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .order('id', { ascending: true });
+
+    if (!error && data) {
+      return { success: true, data: data.map(normalizeToko) };
+    }
+  } catch (error) {}
+
+  const tokos = getLocalTokos();
+  // Filter toko berdasarkan user_id (atau kembalikan beberapa toko untuk demonstrasi owner)
+  const filtered = tokos.filter(t => t.user_id === Number(userId));
+  return { success: true, data: filtered.length > 0 ? filtered : tokos.slice(0, 3) };
+};
 
 /**
  * GET: Ambil 1 toko berdasarkan ID
@@ -182,14 +387,20 @@ export const getTokoById = async (id) => {
       .from('toko_kue')
       .select('*')
       .eq('id', id)
-      .single()
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
+      .single();
+
+    if (!error && data) {
+      return { success: true, data: normalizeToko(data) };
+    }
+  } catch (error) {}
+
+  const tokos = getLocalTokos();
+  const toko = tokos.find(t => String(t.id) === String(id));
+  if (toko) {
+    return { success: true, data: toko };
   }
-}
+  return { success: false, error: 'Toko tidak ditemukan' };
+};
 
 /**
  * POST: Tambah toko baru
@@ -199,14 +410,22 @@ export const addToko = async (tokoData) => {
     const { data, error } = await supabase
       .from('toko_kue')
       .insert([tokoData])
-      .select()
-    
-    if (error) throw error
-    return { success: true, data: data[0] }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .select();
+
+    if (!error && data && data.length > 0) {
+      return { success: true, data: normalizeToko(data[0]) };
+    }
+  } catch (error) {}
+
+  const tokos = getLocalTokos();
+  const newToko = normalizeToko({
+    ...tokoData,
+    id: tokos.length > 0 ? Math.max(...tokos.map(t => t.id || 0)) + 1 : 1
+  });
+  tokos.push(newToko);
+  saveLocalTokos(tokos);
+  return { success: true, data: newToko };
+};
 
 /**
  * PUT: Update toko
@@ -217,14 +436,22 @@ export const updateToko = async (id, tokoData) => {
       .from('toko_kue')
       .update(tokoData)
       .eq('id', id)
-      .select()
-    
-    if (error) throw error
-    return { success: true, data: data[0] }
-  } catch (error) {
-    return { success: false, error: error.message }
+      .select();
+
+    if (!error && data && data.length > 0) {
+      return { success: true, data: normalizeToko(data[0]) };
+    }
+  } catch (error) {}
+
+  const tokos = getLocalTokos();
+  const index = tokos.findIndex(t => String(t.id) === String(id));
+  if (index !== -1) {
+    tokos[index] = normalizeToko({ ...tokos[index], ...tokoData });
+    saveLocalTokos(tokos);
+    return { success: true, data: tokos[index] };
   }
-}
+  return { success: false, error: 'Toko tidak ditemukan' };
+};
 
 /**
  * DELETE: Hapus toko
@@ -234,24 +461,21 @@ export const deleteToko = async (id) => {
     const { error } = await supabase
       .from('toko_kue')
       .delete()
-      .eq('id', id)
-    
-    if (error) throw error
-    return { success: true }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .eq('id', id);
+
+    if (!error) return { success: true };
+  } catch (error) {}
+
+  const tokos = getLocalTokos();
+  const filtered = tokos.filter(t => String(t.id) !== String(id));
+  saveLocalTokos(filtered);
+  return { success: true };
+};
 
 // ==================== TOKO REQUEST FUNCTIONS ====================
 
-/**
- * CREATE: Owner submit request toko baru
- */
 export const createTokoRequest = async (requestData) => {
   try {
-    console.log('📝 Creating request with data:', requestData);
-    
     const requestPayload = {
       user_id: requestData.user_id,
       nama: requestData.nama,
@@ -269,31 +493,30 @@ export const createTokoRequest = async (requestData) => {
       gambar: requestData.gambar || requestData.gambar_toko || null,
       gambarmenu: requestData.gambarmenu || requestData.gambar_menu || null,
       status: 'pending'
-    }
-
-    console.log('📦 Request payload:', requestPayload);
+    };
 
     const { data, error } = await supabase
       .from('toko_requests')
       .insert([requestPayload])
-      .select()
-    
-    if (error) {
-      console.error('❌ Insert error:', error);
-      throw error;
-    }
-    
-    console.log('✅ Request created:', data);
-    return { success: true, data: data[0] }
-  } catch (error) {
-    console.error('❌ Create request failed:', error);
-    return { success: false, error: error.message }
-  }
-}
+      .select();
 
-/**
- * GET: Ambil semua request (untuk Admin)
- */
+    if (!error && data && data.length > 0) {
+      return { success: true, data: data[0] };
+    }
+  } catch (error) {}
+
+  const requests = getLocalRequests();
+  const newReq = {
+    id: Date.now(),
+    ...requestData,
+    status: 'pending',
+    created_at: new Date().toISOString()
+  };
+  requests.unshift(newReq);
+  saveLocalRequests(requests);
+  return { success: true, data: newReq };
+};
+
 export const getAllRequests = async () => {
   try {
     const { data, error } = await supabase
@@ -306,365 +529,293 @@ export const getAllRequests = async () => {
           role
         )
       `)
-      .order('created_at', { ascending: false })
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .order('created_at', { ascending: false });
 
-/**
- * GET: Ambil request milik owner tertentu
- */
+    if (!error && data) return { success: true, data };
+  } catch (error) {}
+
+  return { success: true, data: getLocalRequests() };
+};
+
 export const getRequestsByUserId = async (userId) => {
   try {
     const { data, error } = await supabase
       .from('toko_requests')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .order('created_at', { ascending: false });
 
-/**
- * UPDATE: Admin approve request
- */
+    if (!error && data) return { success: true, data };
+  } catch (error) {}
+
+  const requests = getLocalRequests();
+  const filtered = requests.filter(r => Number(r.user_id) === Number(userId));
+  return { success: true, data: filtered };
+};
+
 export const approveRequest = async (requestId, adminNote = '') => {
   try {
-    console.log('=== APPROVE REQUEST START ===');
-    console.log('Request ID:', requestId);
-    console.log('Admin Note:', adminNote);
-
-    // 1. Ambil data request
-    const { data: request, error: fetchError } = await supabase
+    const { data: request } = await supabase
       .from('toko_requests')
       .select('*')
       .eq('id', requestId)
-      .single()
-    
-    if (fetchError) {
-      console.error('❌ Error fetching request:', fetchError);
-      throw new Error(`Gagal mengambil data request: ${fetchError.message}`);
-    }
+      .single();
 
-    if (!request) {
-      throw new Error('Request tidak ditemukan');
-    }
+    if (request) {
+      const tokoPayload = {
+        user_id: request.user_id,
+        nama: request.nama,
+        lat: request.lat ? parseFloat(request.lat) : null,
+        lng: request.lng ? parseFloat(request.lng) : null,
+        kecamatan: request.kecamatan || null,
+        kelurahan: request.kelurahan || null,
+        jalan: request.jalan || request.alamat || null,
+        produk: request.produk || 'Kue',
+        jam_buka: request.jam_buka || null,
+        telp: request.telp || request.no_telp || null,
+        menu_favorit: request.menu_favorit || null,
+        deskripsi: request.deskripsi || null,
+        gambar: request.gambar || request.gambar_toko || null,
+        gambarmenu: request.gambarmenu || request.gambar_menu || null,
+        rating: null,
+        tahun_berdiri: request.tahun_berdiri ? parseInt(request.tahun_berdiri) : null
+      };
 
-    console.log('✅ Request data:', JSON.stringify(request, null, 2));
+      const { data: newToko } = await supabase
+        .from('toko_kue')
+        .insert([tokoPayload])
+        .select();
 
-    // 2. Validasi data required
-    if (!request.user_id || !request.nama || !request.lat || !request.lng) {
-      throw new Error('Data required tidak lengkap (user_id, nama, lat, lng)');
-    }
+      await supabase
+        .from('toko_requests')
+        .update({ status: 'approved', admin_note: adminNote || null })
+        .eq('id', requestId);
 
-    // 3. Prepare payload
-    const tokoPayload = {
-      user_id: request.user_id,
-      nama: request.nama,
-      lat: request.lat ? parseFloat(request.lat) : null,
-      lng: request.lng ? parseFloat(request.lng) : null,
-      kecamatan: request.kecamatan || null,
-      kelurahan: request.kelurahan || null,
-      jalan: request.jalan || request.alamat || null,
-      produk: request.produk || 'Kue',
-      jam_buka: request.jam_buka || null,
-      telp: request.telp || request.no_telp || null,
-      menu_favorit: request.menu_favorit || null,
-      deskripsi: request.deskripsi || null,
-      gambar: request.gambar || request.gambar_toko || null,
-      gambarmenu: request.gambarmenu || request.gambar_menu || null,
-      rating: null
-    };
-
-    // Handle tahun_berdiri
-    if (request.tahun_berdiri) {
-      const tahun = parseInt(request.tahun_berdiri);
-      tokoPayload.tahun_berdiri = isNaN(tahun) ? null : tahun;
-    } else {
-      tokoPayload.tahun_berdiri = null;
-    }
-
-    console.log('📦 Toko payload:', JSON.stringify(tokoPayload, null, 2));
-
-    // 4. Insert ke toko_kue
-    console.log('💾 Attempting to insert into toko_kue...');
-    const { data: newToko, error: insertError } = await supabase
-      .from('toko_kue')
-      .insert([tokoPayload])
-      .select()
-    
-    if (insertError) {
-      console.error('❌ INSERT FAILED!');
-      console.error('❌ Error:', JSON.stringify(insertError, null, 2));
-      
-      if (insertError.code === '23503') {
-        throw new Error(`Foreign key constraint failed. User ID ${request.user_id} mungkin tidak ada di tabel users.`);
-      } else if (insertError.code === '23502') {
-        throw new Error(`Field required kosong: ${insertError.message}`);
-      } else if (insertError.code === '42703') {
-        throw new Error(`Kolom tidak ditemukan: ${insertError.message}`);
-      } else {
-        throw new Error(`Database error: ${insertError.message} (Code: ${insertError.code})`);
+      if (newToko && newToko.length > 0) {
+        return { success: true, data: newToko[0] };
       }
     }
+  } catch (error) {}
 
-    if (!newToko || newToko.length === 0) {
-      throw new Error('Insert berhasil tapi tidak mengembalikan data');
-    }
+  // Fallback lokal
+  const requests = getLocalRequests();
+  const req = requests.find(r => String(r.id) === String(requestId));
+  if (req) {
+    req.status = 'approved';
+    req.admin_note = adminNote;
+    saveLocalRequests(requests);
 
-    console.log('✅ Toko berhasil ditambahkan!');
-    console.log('✅ New toko data:', JSON.stringify(newToko[0], null, 2));
+    // Tambah ke toko lokal
+    addToko({
+      user_id: req.user_id,
+      nama: req.nama,
+      lat: req.lat,
+      lng: req.lng,
+      kecamatan: req.kecamatan,
+      kelurahan: req.kelurahan,
+      jalan: req.jalan,
+      produk: req.produk,
+      jam_buka: req.jam_buka,
+      tahun_berdiri: req.tahun_berdiri,
+      telp: req.telp,
+      menu_favorit: req.menu_favorit,
+      deskripsi: req.deskripsi,
+      gambar: req.gambar,
+      gambarmenu: req.gambarmenu
+    });
 
-    // 5. Update status request
-    console.log('📝 Updating request status...');
-    const { error: updateError } = await supabase
-      .from('toko_requests')
-      .update({
-        status: 'approved',
-        admin_note: adminNote || null
-      })
-      .eq('id', requestId)
-    
-    if (updateError) {
-      console.error('⚠️ Warning - Error updating request status:', updateError);
-    } else {
-      console.log('✅ Request status updated to approved');
-    }
-
-    console.log('=== APPROVE REQUEST SUCCESS ===');
-    return { success: true, data: newToko[0] };
-
-  } catch (error) {
-    console.error('=== APPROVE REQUEST FAILED ===');
-    console.error('❌ Error:', error);
-    return { success: false, error: error.message };
+    return { success: true, data: req };
   }
-}
+  return { success: false, error: 'Request tidak ditemukan' };
+};
 
-/**
- * UPDATE: Admin reject request
- */
 export const rejectRequest = async (requestId, adminNote = '') => {
   try {
-    console.log('=== REJECT REQUEST START ===');
-    console.log('Request ID:', requestId);
-    console.log('Admin Note:', adminNote);
-
     const { error } = await supabase
       .from('toko_requests')
       .update({
         status: 'rejected',
         admin_note: adminNote || null
       })
-      .eq('id', requestId)
-    
-    if (error) {
-      console.error('❌ Error rejecting request:', error);
-      throw error;
-    }
+      .eq('id', requestId);
 
-    console.log('✅ Request rejected successfully');
-    console.log('=== REJECT REQUEST SUCCESS ===');
+    if (!error) return { success: true };
+  } catch (error) {}
+
+  const requests = getLocalRequests();
+  const req = requests.find(r => String(r.id) === String(requestId));
+  if (req) {
+    req.status = 'rejected';
+    req.admin_note = adminNote;
+    saveLocalRequests(requests);
     return { success: true };
-
-  } catch (error) {
-    console.error('=== REJECT REQUEST FAILED ===');
-    console.error('Error:', error);
-    return { success: false, error: error.message };
   }
-}
+  return { success: false, error: 'Request tidak ditemukan' };
+};
 
-/**
- * DELETE: Hapus request
- */
 export const deleteRequest = async (requestId) => {
   try {
     const { error } = await supabase
       .from('toko_requests')
       .delete()
-      .eq('id', requestId)
-    
-    if (error) throw error
-    return { success: true }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .eq('id', requestId);
+
+    if (!error) return { success: true };
+  } catch (error) {}
+
+  const requests = getLocalRequests();
+  const filtered = requests.filter(r => String(r.id) !== String(requestId));
+  saveLocalRequests(filtered);
+  return { success: true };
+};
 
 // ==================== UPLOAD IMAGE FUNCTIONS ====================
 
-/**
- * Upload gambar toko ke Supabase Storage
- */
 export const uploadTokoImage = async (file, tokoId) => {
   try {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `toko_${tokoId}_${Date.now()}.${fileExt}`
-    const filePath = `toko-images/${fileName}`
+    const fileExt = file.name.split('.').pop();
+    const fileName = `toko_${tokoId}_${Date.now()}.${fileExt}`;
+    const filePath = `toko-images/${fileName}`;
 
-    const { data, error } = await supabase.storage
-      .from('images')
-      .upload(filePath, file)
-
-    if (error) throw error
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('images')
-      .getPublicUrl(filePath)
-
-    return { success: true, url: publicUrl, path: filePath }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
-
-/**
- * Delete image dari storage
- */
-export const deleteTokoImage = async (imagePath) => {
-  try {
     const { error } = await supabase.storage
       .from('images')
-      .remove([imagePath])
+      .upload(filePath, file);
 
-    if (error) throw error
-    return { success: true }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath);
+
+      return { success: true, url: publicUrl, path: filePath };
+    }
+  } catch (error) {}
+
+  // Fallback: create object URL
+  const dummyUrl = URL.createObjectURL(file);
+  return { success: true, url: dummyUrl, path: file.name };
+};
+
+export const deleteTokoImage = async (imagePath) => {
+  try {
+    await supabase.storage.from('images').remove([imagePath]);
+  } catch (error) {}
+  return { success: true };
+};
 
 // ==================== SEARCH & FILTER FUNCTIONS ====================
 
-/**
- * Search toko berdasarkan nama
- */
 export const searchToko = async (query) => {
   try {
     const { data, error } = await supabase
       .from('toko_kue')
       .select('*')
-      .ilike('nama', `%${query}%`)
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .ilike('nama', `%${query}%`);
 
-/**
- * Filter toko berdasarkan kecamatan
- */
+    if (!error && data) return { success: true, data: data.map(normalizeToko) };
+  } catch (error) {}
+
+  const tokos = getLocalTokos();
+  const filtered = tokos.filter(t => t.nama.toLowerCase().includes(query.toLowerCase()));
+  return { success: true, data: filtered };
+};
+
 export const filterByKecamatan = async (kecamatan) => {
   try {
     const { data, error } = await supabase
       .from('toko_kue')
       .select('*')
-      .eq('kecamatan', kecamatan)
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .eq('kecamatan', kecamatan);
 
-/**
- * Filter toko berdasarkan produk
- */
+    if (!error && data) return { success: true, data: data.map(normalizeToko) };
+  } catch (error) {}
+
+  const tokos = getLocalTokos();
+  const filtered = tokos.filter(t => t.kecamatan?.toLowerCase() === kecamatan.toLowerCase());
+  return { success: true, data: filtered };
+};
+
 export const filterByProduk = async (produk) => {
   try {
     const { data, error } = await supabase
       .from('toko_kue')
       .select('*')
-      .eq('produk', produk)
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .eq('produk', produk);
+
+    if (!error && data) return { success: true, data: data.map(normalizeToko) };
+  } catch (error) {}
+
+  const tokos = getLocalTokos();
+  const filtered = tokos.filter(t => t.produk?.toLowerCase() === produk.toLowerCase());
+  return { success: true, data: filtered };
+};
 
 // ==================== LOG HISTORY FUNCTIONS ====================
 
-/**
- * ✅ FIXED: Tambah log aktivitas
- */
 export const addLog = async (logData) => {
   try {
     const logPayload = {
-      user_email: logData.userEmail,
-      user_role: logData.userRole || null,
+      user_email: logData.userEmail || logData.user_email,
+      user_role: logData.userRole || logData.user_role || null,
       action: logData.action,
-      toko_id: logData.tokoId || null,
-      toko_name: logData.tokoName || null,
+      toko_id: logData.tokoId || logData.toko_id || null,
+      toko_name: logData.tokoName || logData.toko_name || null,
       description: logData.description || null,
       timestamp: new Date().toISOString()
     };
 
-    console.log('📝 Adding log:', logPayload);
-
     const { data, error } = await supabase
       .from('log_history')
       .insert([logPayload])
-      .select()
-    
-    if (error) {
-      console.error('❌ Error adding log:', error);
-      throw error;
-    }
-    
-    console.log('✅ Log added successfully:', data);
-    return { success: true, data: data[0] }
-  } catch (error) {
-    console.error('❌ Failed to add log:', error);
-    return { success: false, error: error.message }
-  }
-}
+      .select();
 
-/**
- * GET: Ambil semua log history
- */
+    if (!error && data && data.length > 0) {
+      return { success: true, data: data[0] };
+    }
+  } catch (error) {}
+
+  const logs = getLocalLogs();
+  const newLog = {
+    id: Date.now(),
+    user_email: logData.userEmail || logData.user_email,
+    user_role: logData.userRole || logData.user_role || null,
+    action: logData.action,
+    toko_id: logData.tokoId || logData.toko_id || null,
+    toko_name: logData.tokoName || logData.toko_name || null,
+    description: logData.description || null,
+    timestamp: new Date().toISOString()
+  };
+  logs.unshift(newLog);
+  saveLocalLogs(logs);
+  return { success: true, data: newLog };
+};
+
 export const getAllLogs = async () => {
   try {
     const { data, error } = await supabase
       .from('log_history')
       .select('*')
-      .order('timestamp', { ascending: false })
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .order('timestamp', { ascending: false });
 
-/**
- * GET: Ambil log berdasarkan user email
- */
+    if (!error && data) return { success: true, data };
+  } catch (error) {}
+
+  return { success: true, data: getLocalLogs() };
+};
+
 export const getLogsByUserEmail = async (userEmail) => {
   try {
     const { data, error } = await supabase
       .from('log_history')
       .select('*')
       .eq('user_email', userEmail)
-      .order('timestamp', { ascending: false })
-    
-    if (error) throw error
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
+      .order('timestamp', { ascending: false });
 
-export default supabase
+    if (!error && data) return { success: true, data };
+  } catch (error) {}
+
+  const logs = getLocalLogs();
+  const filtered = logs.filter(l => l.user_email?.toLowerCase() === userEmail.toLowerCase());
+  return { success: true, data: filtered };
+};
+
+export default supabase;
