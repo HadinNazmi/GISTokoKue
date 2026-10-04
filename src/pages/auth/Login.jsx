@@ -85,25 +85,25 @@ export default function Login() {
       {/* Back Button */}
       <button
         onClick={() => navigate('/')}
-        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur hover:bg-white rounded-full shadow-lg transition-all z-10"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white/90 backdrop-blur hover:bg-white rounded-full shadow-lg transition-all z-10 text-xs sm:text-sm font-medium"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span className="font-medium">Kembali</span>
+        <span>Kembali</span>
       </button>
 
       {/* Login Card */}
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden my-12 sm:my-0">
         {/* Header */}
-        <div className="bg-gradient-to-r from-rose-500 to-pink-500 p-8 text-center">
-          <div className="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center text-4xl">
+        <div className="bg-gradient-to-r from-rose-500 to-pink-500 p-6 sm:p-8 text-center">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center text-3xl sm:text-4xl shadow-md">
             🍰
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Login Dashboard</h1>
-          <p className="text-rose-50">WebGIS Toko Kue Pekanbaru</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Login Dashboard</h1>
+          <p className="text-rose-100 text-xs sm:text-sm">WebGIS Toko Kue Pekanbaru</p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleLogin} className="p-8 space-y-6">
+        <form onSubmit={handleLogin} className="p-6 sm:p-8 space-y-4 sm:space-y-6">
           {/* Email Input */}
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">

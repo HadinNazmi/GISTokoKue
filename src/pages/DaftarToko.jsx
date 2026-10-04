@@ -119,35 +119,35 @@ export default function DaftarToko() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white py-24 overflow-hidden">
+      <div className="relative bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white py-14 sm:py-20 overflow-hidden">
         {/* Decorative Elements */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-96 h-96 bg-rose-500 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-pink-500 rounded-full blur-3xl"></div>
         </div>
 
-        <div className="container relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-rose-400 to-pink-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-rose-400 to-pink-400 bg-clip-text text-transparent">
               Daftar Toko Kue
             </h1>
-            <p className="text-xl text-slate-300 mb-8">
+            <p className="text-base sm:text-xl text-slate-300 mb-6 sm:mb-8">
               Temukan {data.length} toko kue terbaik di Kota Pekanbaru
             </p>
 
             {/* Stats */}
-            <div className="flex justify-center gap-8 mb-8">
-              <div className="text-center">
-                <div className="text-4xl font-bold text-rose-400">{data.length}</div>
-                <div className="text-sm text-slate-400">Total Toko</div>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-8 mb-4 sm:mb-8">
+              <div className="text-center px-3 py-1 bg-white/5 rounded-xl border border-white/10 sm:bg-transparent sm:border-none">
+                <div className="text-2xl sm:text-4xl font-bold text-rose-400">{data.length}</div>
+                <div className="text-xs sm:text-sm text-slate-400">Total Toko</div>
               </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-pink-400">{kecamatanList.length - 1}</div>
-                <div className="text-sm text-slate-400">Kecamatan</div>
+              <div className="text-center px-3 py-1 bg-white/5 rounded-xl border border-white/10 sm:bg-transparent sm:border-none">
+                <div className="text-2xl sm:text-4xl font-bold text-pink-400">{kecamatanList.length - 1}</div>
+                <div className="text-xs sm:text-sm text-slate-400">Kecamatan</div>
               </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-purple-400">{produkList.length - 1}</div>
-                <div className="text-sm text-slate-400">Kategori</div>
+              <div className="text-center px-3 py-1 bg-white/5 rounded-xl border border-white/10 sm:bg-transparent sm:border-none">
+                <div className="text-2xl sm:text-4xl font-bold text-purple-400">{produkList.length - 1}</div>
+                <div className="text-xs sm:text-sm text-slate-400">Kategori</div>
               </div>
             </div>
           </div>
@@ -165,17 +165,17 @@ export default function DaftarToko() {
       </div>
 
       {/* Filter Section */}
-      <div className="container -mt-8 relative z-20">
-        <div className="bg-white rounded-2xl shadow-2xl p-6 mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 -mt-6 sm:-mt-8 relative z-20">
+        <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 mb-8 border border-slate-100">
           {/* Search Bar */}
-          <div className="relative mb-4">
+          <div className="relative mb-3 sm:mb-4">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
-              placeholder="Cari nama atau alamat penginapan..."
+              placeholder="Cari nama toko, kelurahan, atau kecamatan..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-xl focus:border-rose-500 focus:ring-2 focus:ring-rose-200 transition-all outline-none text-slate-700"
+              className="w-full pl-12 pr-4 py-3 sm:py-4 border-2 border-slate-200 rounded-xl focus:border-rose-500 focus:ring-2 focus:ring-rose-200 transition-all outline-none text-slate-700 text-sm sm:text-base"
             />
           </div>
 
@@ -252,7 +252,7 @@ export default function DaftarToko() {
 
         {/* Toko Cards Grid */}
         {filteredData.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 pb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 pb-16">
             {filteredData.map(toko => (
               <TokoCard key={toko.id} toko={toko} />
             ))}

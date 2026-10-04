@@ -32,7 +32,7 @@ export default function Navbar() {
           : "bg-white border-b border-slate-100"
       }`}
     >
-      <div className="container flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         {/* LOGO */}
         <Link
           to="/"
@@ -41,7 +41,7 @@ export default function Navbar() {
           <div className="p-2 bg-gradient-to-br from-rose-500 to-pink-500 rounded-lg shadow-lg">
             <Cake className="w-5 h-5 text-white" />
           </div>
-          <span className="hidden sm:block">WebGIS Toko Kue</span>
+          <span className="font-bold text-base sm:text-lg">WebGIS Toko Kue</span>
         </Link>
 
         {/* DESKTOP MENU */}
@@ -88,10 +88,11 @@ export default function Navbar() {
         {/* MOBILE MENU BUTTON */}
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden p-2 text-slate-600 hover:text-rose-600 transition-colors"
+          aria-label="Toggle Menu"
+          className="md:hidden p-2 text-slate-600 hover:text-rose-600 transition-colors rounded-lg hover:bg-rose-50"
         >
           {isMobileMenuOpen ? (
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6 text-rose-600" />
           ) : (
             <Menu className="w-6 h-6" />
           )}
@@ -101,15 +102,15 @@ export default function Navbar() {
       {/* MOBILE MENU */}
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-lg border-b border-slate-200 shadow-xl animate-fadeUp">
-          <div className="container py-4 space-y-3">
+          <div className="px-4 py-4 space-y-2">
             {menuItems.map((m) => (
               <Link
                 key={m.to}
                 to={m.to}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-lg font-medium transition-all ${
+                className={`block px-4 py-3 rounded-xl font-medium transition-all ${
                   isActive(m.to)
-                    ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white"
+                    ? "bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-md"
                     : "text-slate-600 hover:bg-rose-50 hover:text-rose-600"
                 }`}
               >
@@ -117,14 +118,23 @@ export default function Navbar() {
               </Link>
             ))}
 
+            {/* Buka Peta CTA Mobile */}
+            <Link
+              to="/map"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-md hover:shadow-lg transition-all"
+            >
+              <span>🗺️ Buka Peta Interaktif</span>
+            </Link>
+
             {/* LOGIN MOBILE */}
             <Link
               to="/login"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-2 px-4 py-3 rounded-lg text-rose-600 font-semibold hover:bg-rose-50"
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-rose-600 font-semibold border-2 border-rose-200 hover:bg-rose-50 transition-all"
             >
               <LogIn className="w-5 h-5" />
-              Login
+              <span>Login ke Dashboard</span>
             </Link>
           </div>
         </div>

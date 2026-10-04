@@ -9,7 +9,7 @@ export default function StatSection({ tokoData }) {
   ).toFixed(1);
 
   return (
-    <section className="section bg-slate-50">
+    <section id="statistik-section" className="section bg-slate-50 scroll-mt-20">
       <div className="container">
         <h2 className="section-title">Statistik Toko Kue</h2>
         <p className="section-desc">

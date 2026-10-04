@@ -58,6 +58,12 @@ export default function Footer() {
                 </a>
               </li>
               <li>
+                <a href="/daftar-toko" className="text-slate-600 hover:text-rose-600 transition-colors flex items-center gap-2 group">
+                  <span className="w-1.5 h-1.5 bg-rose-400 rounded-full group-hover:w-2 group-hover:h-2 transition-all"></span>
+                  Daftar Toko
+                </a>
+              </li>
+              <li>
                 <a href="/about" className="text-slate-600 hover:text-rose-600 transition-colors flex items-center gap-2 group">
                   <span className="w-1.5 h-1.5 bg-rose-400 rounded-full group-hover:w-2 group-hover:h-2 transition-all"></span>
                   Tentang

@@ -29,18 +29,18 @@ export default function About() {
     <section className="bg-gradient-to-br from-slate-50 via-rose-50 to-pink-50 min-h-screen">
       <div className="pt-24 pb-16">
         {/* Hero Section */}
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full text-sm font-medium mb-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12 sm:mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 sm:py-2 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6">
               <Award className="w-4 h-4" />
               Tentang Kami
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-800 mb-6">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-slate-800 mb-4 sm:mb-6 leading-tight">
               WebGIS <span className="bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">Toko Kue</span> Pekanbaru
             </h1>
 
-            <p className="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-sm sm:text-base md:text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
               Platform digital berbasis Geographic Information System (GIS) yang memetakan persebaran toko kue, bakery, dan brownies di Kota Pekanbaru
             </p>
           </div>
@@ -127,17 +127,17 @@ export default function About() {
           </div>
 
           {/* Institution Info */}
-          <div className="bg-gradient-to-br from-rose-500 to-pink-500 rounded-3xl p-8 md:p-12 text-white shadow-2xl">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="bg-gradient-to-br from-rose-500 to-pink-500 rounded-3xl p-6 sm:p-8 md:p-12 text-white shadow-2xl">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8 text-center md:text-left">
               <div>
-                <h2 className="text-3xl font-bold mb-4">Politeknik Caltex Riau</h2>
-                <p className="text-rose-100 leading-relaxed max-w-2xl">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Politeknik Caltex Riau</h2>
+                <p className="text-rose-100 text-sm sm:text-base leading-relaxed max-w-2xl">
                   Sistem ini dikembangkan sebagai bagian dari implementasi teknologi informasi dan GIS dalam mendukung pengembangan smart city dan pemberdayaan UMKM lokal di Kota Pekanbaru.
                 </p>
               </div>
               <div className="flex-shrink-0">
-                <div className="w-32 h-32 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                  <Award className="w-16 h-16" />
+                <div className="w-20 h-20 sm:w-28 sm:h-28 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                  <Award className="w-10 h-10 sm:w-14 sm:h-14" />
                 </div>
               </div>
             </div>

@@ -174,7 +174,7 @@ export default function Home() {
               }}
             >
               {tokoData.map((toko) => (
-                <div key={toko.id} className="flex-shrink-0 w-80 sm:w-96">
+                <div key={toko.id} className="flex-shrink-0 w-[84vw] max-w-[320px] sm:max-w-none sm:w-96">
                   <TokoCard toko={toko} />
                 </div>
               ))}
